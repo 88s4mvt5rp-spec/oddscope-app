@@ -153,6 +153,42 @@ def outcome_probs(lh, la, rho=0.0):
     return [x / s for x in res]
 
 
+def score_matrix(lh, la, rho=0.0):
+    """Probability of every score (h, a) up to MAX_GOALS, Dixon-Coles corrected, normalised."""
+    ph, pa = _poisson_pmf(lh), _poisson_pmf(la)
+    m = [[ph[h] * pa[a] * (max(0.0, _tau(h, a, lh, la, rho)) if h < 2 and a < 2 else 1.0)
+          for a in range(MAX_GOALS + 1)] for h in range(MAX_GOALS + 1)]
+    s = sum(map(sum, m))
+    return [[x / s for x in row] for row in m]
+
+
+def market_lambdas(total, p_home, p_away, rho=0.0):
+    """Split an expected goal total between the teams so that the score model reproduces
+    the market's home-minus-away probability. Gives a market-consistent score matrix."""
+    target = p_home - p_away
+    lo, hi = 0.03, 0.97
+    for _ in range(50):
+        r = (lo + hi) / 2
+        p = outcome_probs(total * r, total * (1 - r), rho)
+        if p[0] - p[2] < target:
+            lo = r
+        else:
+            hi = r
+    r = (lo + hi) / 2
+    return total * r, total * (1 - r)
+
+
+def derived_markets(m):
+    """Secondary markets from a score matrix."""
+    n = len(m)
+    tot = lambda f: sum(m[h][a] for h in range(n) for a in range(n) if f(h, a))
+    out = {'1': tot(lambda h, a: h > a), 'N': tot(lambda h, a: h == a), '2': tot(lambda h, a: h < a),
+           'btts_yes': tot(lambda h, a: h > 0 and a > 0)}
+    for line in (0.5, 1.5, 2.5, 3.5, 4.5):
+        out[f'over_{line}'] = tot(lambda h, a, l=line: h + a > l)
+    return out
+
+
 class DixonColes:
     """Time-weighted, shrunk Dixon-Coles model.
 

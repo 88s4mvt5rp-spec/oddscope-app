@@ -1,6 +1,6 @@
 // Offline shell for the phone app. Odds API calls are never cached (always live).
-const CACHE = 'oddscope-v2';
-const SHELL = ['./', 'index.html', 'app.css', 'app.js', 'engine.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'data/models.json'];
+const CACHE = 'oddscope-v3';
+const SHELL = ['./', 'index.html', 'app.css', 'app.js', 'engine.js', 'insights.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'data/models.json'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

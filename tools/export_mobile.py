@@ -9,7 +9,7 @@ are fitted here and shipped as a small JSON file. Run:
 from __future__ import annotations
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from backtest import run_backtest
@@ -40,13 +40,15 @@ def export_league(sport, store, storage, do_backtest):
     for t, display in m.display.items():
         if not m.knows(t):
             continue
-        prof = m.team_profile(t)
-        teams[display] = {
-            'att': round(m.att[t], 5), 'dfn': round(m.dfn[t], 5),
-            'se_att': round(m.se_att[t], 5), 'se_dfn': round(m.se_dfn[t], 5),
-            'n': m.team_n[t], 'last': prof['last_match'], 'form': prof['form'],
-            'last5': prof['last5'], 'home': prof['home_12m'], 'away': prof['away_12m'],
-        }
+        teams[display] = {'att': round(m.att[t], 5), 'dfn': round(m.dfn[t], 5),
+                          'se_att': round(m.se_att[t], 5), 'se_dfn': round(m.se_dfn[t], 5), 'n': m.team_n[t]}
+    # Compact results of the last two years: form, home/away records and head-to-head
+    # are computed on the phone from this list.
+    cutoff = m.last_date - timedelta(days=730)
+    recent = [x for x in matches if x['date'] >= cutoff]
+    names = sorted({x['home'] for x in recent} | {x['away'] for x in recent})
+    idx = {n: i for i, n in enumerate(names)}
+    results = [[x['date'].isoformat(), idx[x['home']], idx[x['away']], x['hg'], x['ag']] for x in recent]
     validation = None
     if report:
         t = report['test_metrics']
@@ -56,7 +58,8 @@ def export_league(sport, store, storage, do_backtest):
                       'naive_log_loss': t['naive']['log_loss'], 'decision': report['decision']}
     return {'title': LEAGUES[sport][1], 'base': round(m.base, 5), 'home_adv': round(m.home_adv, 5),
             'rho': m.rho, 'matches': m.n_matches, 'last_date': m.last_date.isoformat(),
-            'config': cfg, 'validation': validation, 'teams': teams}
+            'avg_total': round(m.base * (m.home_adv + 1), 4),
+            'config': cfg, 'validation': validation, 'teams': teams, 'names': names, 'results': results}
 
 
 def main():

@@ -5,6 +5,13 @@ Appli web installable (sur l'écran d'accueil) qui analyse les cotes des bookmak
 - Les cotes viennent de [The Odds API](https://the-odds-api.com/) et sont téléchargées **directement depuis ton téléphone**, avec ta clé personnelle, qui reste stockée sur le téléphone. Ce dépôt ne contient **aucune clé ni aucune donnée personnelle**.
 - Les statistiques des équipes (modèle Dixon-Coles, forme, domicile/extérieur) viennent de [football-data.co.uk](https://www.football-data.co.uk/). Elles sont recalculées chaque lundi par GitHub Actions (`tools/export_mobile.py`), avec une validation chronologique contre le marché.
 
+## Ce que fait l'appli
+
+- Couvre le foot (18 championnats avec statistiques, plus la Ligue des champions), la NBA, la NHL et le tennis (tous les tournois en cours).
+- Pour chaque match, elle propose un pari **🟢 Safe**, un **🟡 Mi-safe** et un **🔴 Risqué**, avec une explication « Pourquoi ce pari ? » : forme, domicile/extérieur, buts, confrontations, avis du modèle, accord des bookmakers.
+- Seules les cotes **Unibet** sont proposées. Quand la source ne fournit pas la cote Unibet (plus/moins de buts, double chance…), l'appli donne la **cote minimum à exiger**.
+- Les buteurs ne sont pas proposés : il n'existe aucune donnée joueur fiable et gratuite.
+
 ## Installer sur le téléphone
 
 1. Ouvre l'adresse de l'appli, celle qui apparaît dans *Settings → Pages* une fois la publication activée.

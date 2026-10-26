@@ -112,3 +112,14 @@ td.best{color:var(--accent);font-weight:700}
 .legal{font-size:11.5px;color:var(--muted);text-align:center;margin:8px 0 0}
 @media (min-width:700px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.picks{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
 @media (max-width:360px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.why-list{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--text-2);display:flex;flex-direction:column;gap:5px}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;padding:4px 0}
+.odds b.min{font-size:20px;color:var(--text-2)}
+.hero .odds b.min{font-size:24px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13px;margin-top:8px}
+.kv span{color:var(--muted)}.kv b{text-align:right;font-weight:600}
+.fam{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:12px 0 2px}
+.match-row{flex-direction:column;align-items:stretch;text-align:left;width:100%;gap:4px}
+.tiers-mini{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-2);margin-top:4px}
+.tiers-mini b{font-family:var(--mono);color:var(--text)}
+.card.tier-safe{border-color:rgba(12,163,12,.45)}.card.tier-mid{border-color:rgba(250,178,25,.4)}.card.tier-risky{border-color:rgba(208,59,59,.45)}
