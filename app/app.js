@@ -22,7 +22,9 @@ const store = {
   set(k, v) { try { localStorage.setItem('oddscope.' + k, JSON.stringify(v)); return true; } catch { toast('Mémoire du téléphone pleine : efface des données dans Réglages.', 'error'); return false; } },
   del(k) { try { localStorage.removeItem('oddscope.' + k); } catch { /* ignore */ } },
 };
-const settings = () => ({sports: DEFAULT_SPORTS, reference: true, horizon: 168, reserve: 20, minInterval: 5, ...store.get('settings', {})});
+const FR_BOOKS = [['unibet_fr', 'Unibet'], ['betclic_fr', 'Betclic'], ['winamax_fr', 'Winamax'], ['pmu_fr', 'PMU'], ['netbet_fr', 'NetBet']];
+const settings = () => ({sports: DEFAULT_SPORTS, books: ['unibet_fr'], reference: true, horizon: 168, reserve: 20, minInterval: 5, ...store.get('settings', {})});
+const booksLabel = s => s.books.map(k => (FR_BOOKS.find(b => b[0] === k) || [k, k])[1]).join(', ');
 const state = {models: null, matcher: null, boards: null, tab: 'value', comp: null, minProb: 0, minOdds: 1.2, busy: false, sportsList: store.get('sports', null)};
 
 function toast(msg, kind = '') {
@@ -71,8 +73,8 @@ function buildBoards() {
     const snap = snapshot(sport);
     if (!snap) continue;
     const league = state.models.leagues[sport];
-    const fr = new Set(snap.events.flatMap(e => (e.bookmakers || []).map(b => b.key)).filter(k => k.endsWith('_fr')));
-    const res = Engine.analyzeCompetition(snap.events, {now, sportName: title(sport), booksFilter: fr.size ? fr : null,
+    // Only the bookmaker(s) chosen in Réglages are proposed; every other book still feeds the probability estimate.
+    const res = Engine.analyzeCompetition(snap.events, {now, sportName: title(sport), booksFilter: new Set(settings().books),
       modelPredict: Engine.modelPredictor(league, state.matcher), modelWeight: league?.validation?.weight || 0,
       method: league?.validation?.devig || 'shin', snapshotAge: (now - new Date(snap.fetched_at)) / 60000});
     boards.push({sport, sport_title: title(sport), fetched_at: snap.fetched_at, events: res.events});
@@ -155,7 +157,7 @@ function viewPicks(v) {
   const list = (state.tab === 'value' ? p.value : p.probable).filter(c => c.probability >= state.minProb / 100 && c.odds >= state.minOdds && (!state.comp || c.sport === state.comp));
   const hero = state.tab === 'value' && list.length ? list[0] : null;
   v.innerHTML = `
-  <div class="head"><div class="eyebrow">${s.sports.length} compétitions · ${s.reference ? 'référence Pinnacle/Betfair' : 'bookmakers FR'}</div><h1>Paris du jour</h1>
+  <div class="head"><div class="eyebrow">Cotes ${esc(booksLabel(s))} · ${s.sports.length} compétitions</div><h1>Paris du jour</h1>
     <p>Un pari par match, classé du plus prometteur au moins prometteur. Les étoiles mesurent le rendement attendu, pas la chance de gagner.</p></div>
   <button class="btn primary block" data-act="analyze">↻ Analyser les matchs · ${s.sports.length * (s.reference ? 2 : 1)} crédits</button>
   <div class="progress"><i id="progress" style="width:0"></i></div>
@@ -196,7 +198,7 @@ function detailHtml(sport, e) {
     <p class="small muted" style="margin:6px 0 0">5 derniers : ${t.last5.w}V ${t.last5.d}N ${t.last5.l}D (${t.last5.gf}-${t.last5.ga}) · Domicile 12 mois : ${t.home.w}V ${t.home.d}N ${t.home.l}D · Extérieur : ${t.away.w}V ${t.away.d}N ${t.away.l}D</p>
     <p class="small muted" style="margin:4px 0 0">${t.form.map(f => `${esc(f.venue === 'D' ? 'vs' : '@')} ${esc(f.opponent)} ${esc(f.score)}`).join(' · ')}</p></div>` : '';
   const bar = (p, lo, hi, color) => `<div class="bar">${lo != null ? `<i style="left:${lo * 100}%;width:${(hi - lo) * 100}%;background:${color};opacity:.35"></i>` : ''}<i style="left:0;width:${p * 100}%;background:${color};opacity:.85"></i></div>`;
-  const fr = e.bookmakers.filter(b => b.is_fr), ref = e.bookmakers.filter(b => !b.is_fr);
+  const fr = e.bookmakers.filter(b => b.selected), ref = e.bookmakers.filter(b => !b.selected);
   const table = list => `<table><thead><tr><th>Bookmaker</th>${e.outcomes.map(o => `<th>${o === 'Draw' ? 'N' : o === e.home ? '1' : '2'}</th>`).join('')}<th>Marge</th></tr></thead><tbody>${list.map(b => `<tr><td>${esc(b.title)}${b.stale ? ' <span class="pill critical">retard</span>' : ''}</td>${e.outcomes.map(o => `<td class="mono ${e.best[o]?.key === b.key ? 'best' : ''}">${odds(b.odds[o])}${arrow(b.key, o, b.odds[o])}</td>`).join('')}<td class="mono">${pct(b.overround, 1)}</td></tr>`).join('')}</tbody></table>`;
   return `<div><div class="eyebrow">${esc(title(sport))} · ${esc(when(e.start))}</div><h2>${esc(e.home)} – ${esc(e.away)}</h2>
     <p class="small muted" style="margin:4px 0 0">Fiabilité ${e.reliability.score}/100 (${esc(e.reliability.label)}) · incertitude ${esc(e.uncertainty.label.toLowerCase())} · ${e.books_used} bookmakers · référence ${e.market.source === 'sharp' ? 'Pinnacle/Betfair' : 'médiane'}</p></div>
@@ -209,8 +211,8 @@ function detailHtml(sport, e) {
   <div class="card"><h3>Qualité des données</h3>${e.reliability.flags.length ? `<ul class="flags">${e.reliability.flags.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : '<p class="small muted">Aucune alerte.</p>'}
     <p class="small muted" style="margin:6px 0 0">Modèle : ${esc(e.model_status)}${e.model ? ` · buts attendus ${nf(2).format(e.model.xg_home)} – ${nf(2).format(e.model.xg_away)}` : ''}</p></div>
   ${formHtml(e.model?.matched?.home || e.home, team(e.model?.matched?.home))}${formHtml(e.model?.matched?.away || e.away, team(e.model?.matched?.away))}
-  <div class="card"><h3>Bookmakers français</h3>${fr.length ? table(fr) : '<p class="small muted">Aucun opérateur français ne propose ce match.</p>'}
-    ${ref.length ? `<details style="margin-top:8px"><summary class="small">Bookmakers de référence (${ref.length}, non agréés en France)</summary>${table(ref)}</details>` : ''}
+  <div class="card"><h3>Cotes ${esc(booksLabel(settings()))}</h3>${fr.length ? table(fr) : `<p class="small muted">${esc(booksLabel(settings()))} ne propose pas ce match.</p>`}
+    ${ref.length ? `<details style="margin-top:8px"><summary class="small">Autres bookmakers (${ref.length}) — servent seulement à estimer la probabilité</summary>${table(ref)}</details>` : ''}
     <p class="small muted" style="margin:6px 0 0">▲▼ : variation depuis l’analyse précédente.</p></div>`;
 }
 function openDetail(sport, id) {
@@ -285,6 +287,8 @@ function viewSettings(v) {
   <div class="card"><h3>Compétitions à analyser</h3><p class="small muted">${s.sports.length} sélectionnées · ${s.sports.length * (s.reference ? 2 : 1)} crédits par analyse. « Modèle » = statistiques disponibles.</p>
     ${sportsList.map(x => `<label class="check"><input type="checkbox" name="sp" value="${esc(x.key)}" ${s.sports.includes(x.key) ? 'checked' : ''}> ${esc(x.title)}${state.models.leagues[x.key] ? ' <span class="pill accent">modèle</span>' : ''}</label>`).join('')}
     ${state.sportsList ? '' : '<button class="btn sm" data-act="loadsports" style="margin-top:8px">Voir toutes les compétitions (gratuit)</button>'}</div>
+  <div class="card"><h3>Bookmaker pour jouer</h3><p class="small muted">Seules ses cotes sont proposées. Les autres bookmakers servent uniquement à estimer la vraie probabilité.</p>
+    ${FR_BOOKS.map(([k, l]) => `<label class="check"><input type="checkbox" name="bk" value="${k}" ${s.books.includes(k) ? 'checked' : ''}> ${l}</label>`).join('')}</div>
   <div class="card"><h3>Précision</h3>
     <label class="check"><input type="checkbox" id="ref" ${s.reference ? 'checked' : ''}> Référence Pinnacle / Betfair (+1 crédit, bien plus précis)</label>
     <div class="filters" style="margin-top:8px"><label class="field"><span>Période</span><select id="horizon">${[[24, '24 h'], [72, '3 jours'], [168, '7 jours']].map(([h, l]) => `<option value="${h}" ${s.horizon === h ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -324,7 +328,9 @@ document.addEventListener('click', async ev => {
   } else if (a === 'savesettings') {
     const sports = [...document.querySelectorAll('input[name="sp"]:checked')].map(i => i.value);
     if (!sports.length) return toast('Choisis au moins une compétition.', 'error');
-    store.set('settings', {...settings(), sports, reference: $('ref').checked, horizon: +$('horizon').value, reserve: Math.max(0, +$('reserve').value || 0)});
+    const books = [...document.querySelectorAll('input[name="bk"]:checked')].map(i => i.value);
+    if (!books.length) return toast('Choisis au moins un bookmaker.', 'error');
+    store.set('settings', {...settings(), sports, books, reference: $('ref').checked, horizon: +$('horizon').value, reserve: Math.max(0, +$('reserve').value || 0)});
     state.boards = null; toast('Réglages enregistrés.', 'success'); render();
   } else if (a === 'wipe') {
     if (!confirm('Effacer la clé, les cotes enregistrées et tes paris suivis ?')) return;

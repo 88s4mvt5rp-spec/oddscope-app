@@ -300,7 +300,7 @@
       summary: {candidates: cands.length, with_value: withValue, confirmed: value.filter(c => c.stars === 5).length, matches: new Set(cands.map(c => c.event_id)).size, excluded, horizon_hours: horizonHours},
       verdict: !cands.length ? 'Aucune rencontre exploitable : lance « Analyser » pour récupérer des cotes à jour.' :
         withValue ? `${withValue} pari(s) avec value aujourd’hui.` :
-        'Aucun pari avec value pour le moment : les cotes françaises sont toutes sous leur prix juste. Les sélections ci-dessous sont les meilleurs prix disponibles, classés du moins coûteux au plus coûteux.'};
+        'Aucun pari avec value pour le moment : les cotes proposées sont toutes sous leur prix juste. Les sélections ci-dessous sont les meilleurs prix disponibles, classés du moins coûteux au plus coûteux.'};
   }
 
   /* ---------------------------------------------------------------- whole competition */
