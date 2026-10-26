@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0e16">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.the-odds-api.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Oddscope">
+<title>Oddscope — Paris du jour</title>
+<meta name="description" content="Analyse des cotes des bookmakers français : un pari par match, classé par rendement attendu. Aucun gain garanti.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icon.svg" alt="" width="26" height="26"><span>ODDSCOPE<b>AI</b></span></div>
+  <div class="top-right"><span id="quota" class="quota" title="Crédits API restants">—</span></div>
+</header>
+<div id="toast" class="toast" role="status" hidden></div>
+<main id="view" class="view"></main>
+<nav class="tabs" aria-label="Navigation">
+  <a href="#paris" data-tab="paris"><span>★</span>Paris</a>
+  <a href="#matchs" data-tab="matchs"><span>☰</span>Matchs</a>
+  <a href="#suivi" data-tab="suivi"><span>✓</span>Mes paris</a>
+  <a href="#reglages" data-tab="reglages"><span>⚙</span>Réglages</a>
+</nav>
+<div id="sheet" class="sheet" hidden><div class="sheet-body" role="dialog" aria-modal="true"><button class="sheet-close" id="sheetClose" aria-label="Fermer">✕</button><div id="sheetContent"></div></div></div>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
